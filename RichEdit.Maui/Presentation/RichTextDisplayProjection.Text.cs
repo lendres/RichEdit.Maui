@@ -5,9 +5,14 @@ internal sealed partial class RichTextDisplayProjection
     internal TextSnapshot ProjectText(TextSnapshot source, RichTextDisplayProjection? previous = null,
         TextSnapshot? previousSource = null, TextSnapshot? previousDisplay = null)
     {
-        if (_lineEndings is not null)
-            return WithoutLineEndings().ProjectText(_lineEndings.Display, previous?.WithoutLineEndings(),
-                previous?._lineEndings?.Display ?? previousSource, previousDisplay);
+        if (_sourceText is not null)
+        {
+            return WithoutSourceText().ProjectText(
+                _sourceText.Display,
+                previous?.WithoutSourceText(),
+                previous?._sourceText?.Display ?? previousSource,
+                previousDisplay);
+        }
         if (Reservations.IsEmpty) return source;
         if (previous is null || previousSource is null || previousDisplay is null || previous._structured is not null ||
             previousDisplay.Length != (long)previousSource.Length + previous._prefixLengths[^1])

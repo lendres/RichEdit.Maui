@@ -21,7 +21,7 @@ var editor = new CodeEditor
 };
 ```
 
-`IndentSize` controls inserted indentation; `TabSize` controls native tab display. `NewLine` is an insertion policy. Use an explicit document edit with `NormalizeLineEndings` to change existing terminators.
+`IndentSize` controls inserted indentation; `TabSize` controls tab display. On Windows, source tabs are expanded into display-only spaces to reach the next logical column stop. Exact source tabs and line endings remain unchanged. Inline widgets add visual width without changing the source column grid. `NewLine` is an insertion policy. Use an explicit document edit with `NormalizeLineEndings` to change existing terminators.
 
 `Indent()`, `Outdent()`, `InsertNewLine()`, and `ToggleLineComment()` apply the same editing policies as their keyboard bindings to all current selections. Use these methods for toolbar and menu commands. Each operation is one undoable edit and respects read-only mode and the length limit.
 

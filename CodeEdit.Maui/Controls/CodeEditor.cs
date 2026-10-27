@@ -139,7 +139,7 @@ public sealed partial class CodeEditor : ContentView
         nameof(IndentSize), typeof(int), typeof(CodeEditor), 4,
         validateValue: static (_, value) => value is int size && size is >= 1 and <= 16);
 
-    /// <summary>Identifies the native tab-display width, independently of indentation insertion.</summary>
+    /// <summary>Identifies the tab-display width, independently of indentation insertion.</summary>
     public static readonly BindableProperty TabSizeProperty = BindableProperty.Create(
         nameof(TabSize), typeof(int), typeof(CodeEditor), 4,
         validateValue: static (view, value) => { ((CodeEditor)view).VerifyAccess(); return value is int size && size is >= 1 and <= 32; },
@@ -313,7 +313,7 @@ public sealed partial class CodeEditor : ContentView
     /// <summary>Gets or sets the indentation width in spaces, from 1 through 16. This is not a native tab-stop setting.</summary>
     public int IndentSize { get => (int)GetValue(IndentSizeProperty); set => SetValue(IndentSizeProperty, value); }
 
-    /// <summary>Gets or sets native tab spacing in the view's space advances, from one through 32. Source tab characters remain unchanged.</summary>
+    /// <summary>Gets or sets tab spacing in display columns, from one through 32. Source tab characters remain unchanged.</summary>
     public int TabSize { get => (int)GetValue(TabSizeProperty); set => SetValue(TabSizeProperty, value); }
 
     /// <summary>Gets or sets whether indentation inserts tabs instead of spaces.</summary>

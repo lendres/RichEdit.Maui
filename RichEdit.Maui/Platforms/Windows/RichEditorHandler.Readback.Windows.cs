@@ -278,7 +278,9 @@ public partial class RichEditorHandler
         }
 
         _hasNativeLinks = document.Links.Length != 0;
-        var sourceLength = VirtualView.MaxLength < 0 || NativeProjection.Reservations.IsEmpty ? document.Length :
+        var sourceLength = NativeProjection.SourceProjection is { } sourceProjection
+            ? sourceProjection.Source.Length + document.Length - DisplaySourceSnapshot.Length
+            : VirtualView.MaxLength < 0 || NativeProjection.Reservations.IsEmpty ? document.Length :
             ReadDisplayReservationMetadata(document.Text).ToSource(document.Length);
         if (VirtualView.MaxLength >= 0 && sourceLength > VirtualView.MaxLength && sourceLength > VirtualView.Document.Length)
         {
@@ -563,6 +565,10 @@ public partial class RichEditorHandler
         var length = end - start;
         UpdateSelectionFromDisplay((selection.Options & SelectionOptions.StartActive) != 0 ?
             new TextSelectionState(end, start) : new TextSelectionState(start, end));
+        if (NativeProjection.SourceProjection?.HasTabs == true && !_isComposing)
+        {
+            SetNativeSelectionCore(NativeProjection.ToDisplay(VirtualView.SelectionState));
+        }
         UpdateTypingFormatsFromPlatform();
     }
 

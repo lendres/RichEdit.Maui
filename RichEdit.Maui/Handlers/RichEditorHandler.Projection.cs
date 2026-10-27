@@ -55,8 +55,10 @@ public partial class RichEditorHandler
 
     private RichTextDocumentSnapshot DisplayPresentationSnapshot => NativeProjection.IsEmpty ? VirtualView.PresentationSnapshot : _displayState!.Presentation;
 
-    private int DisplayInputLimit => VirtualView.StructuredSession is not null || VirtualView.MaxLength < 0 ? -1 : (int)Math.Min(int.MaxValue,
-        (long)VirtualView.MaxLength + NativeProjection.Reservations.Sum(static item => item.Text.Length));
+    private int DisplayInputLimit => VirtualView.StructuredSession is not null || VirtualView.MaxLength < 0 ? -1 : (int)Math.Min(
+        int.MaxValue,
+        (long)VirtualView.MaxLength + NativeProjection.Reservations.Sum(static item => item.Text.Length) +
+        (NativeProjection.SourceProjection is { } sourceProjection ? Math.Max(0, sourceProjection.Display.Length - sourceProjection.Source.Length) : 0));
 
     private IEnumerable<TextSpan> DisplayFoldRanges => VirtualView.Folding.EffectiveRanges.Select(range => NativeProjection.ToDisplay(range));
 
@@ -175,7 +177,8 @@ public partial class RichEditorHandler
 
         var projection = RichTextDisplayProjection.Create(VirtualView, _displayWidth, _publishedAdornments, _virtualSpace);
         var reuseSource = ReferenceEquals(_projectionSource, VirtualView.Document.CurrentSnapshot) &&
-            NativeProjection.Reservations.AsSpan().SequenceEqual(projection.Reservations.AsSpan()) && !widthChanged && !measured;
+            NativeProjection.Reservations.AsSpan().SequenceEqual(projection.Reservations.AsSpan()) &&
+            NativeProjection.SourceProjection?.TabSize == projection.SourceProjection?.TabSize && !widthChanged && !measured;
         var input = VirtualView.Document.CurrentSnapshot;
         var projectedText = reuseSource ? _displayState!.Source.TextBuffer : projection.ProjectText(input.TextBuffer, NativeProjection,
             _projectionSource?.TextBuffer, _displayState?.Source.TextBuffer);
@@ -204,8 +207,10 @@ public partial class RichEditorHandler
         var hadReservations = !NativeProjection.IsEmpty;
         var hadWidgets = !NativeProjection.Reservations.IsEmpty;
         PrepareDisplayProjection();
-        if (!hadWidgets && NativeProjection.Reservations.IsEmpty && VirtualView.Document.GetSourceDisplayChange(changes) is { } sourceChange)
+        if (!hadWidgets && NativeProjection.Reservations.IsEmpty && NativeProjection.SourceProjection?.TabSize is not > 0 && VirtualView.Document.GetSourceDisplayChange(changes) is { } sourceChange)
+        {
             return sourceChange;
+        }
         if (!hadReservations && NativeProjection.IsEmpty)
             return RemoveImagePositionChanges(changes);
 
@@ -349,11 +354,14 @@ public partial class RichEditorHandler
         var source = map.Unproject(snapshot);
         if (VirtualView.SourceSession is not null)
         {
-            var restored = VirtualView.RestoreNativeSource(source, selection,
-                nativeReplacement is { } replaced ? NativeProjection.ToSource(new TextSelectionState(replaced.Start, replaced.End)).Range : null);
+            var restored = VirtualView.RestoreNativeSource(
+                source,
+                selection,
+                nativeReplacement is { } replaced ? NativeProjection.ToSource(new TextSelectionState(replaced.Start, replaced.End)).Range : null,
+                NativeProjection.SourceProjection);
             source = restored.Snapshot;
             selection = restored.Selection;
-            map = map.WithLineEndings(restored.Projection);
+            map = map.WithSourceText(restored.Projection);
         }
         _displayState = new(map, snapshot, snapshot);
         _paintedSnapshot = nativePresentation;
@@ -369,6 +377,10 @@ public partial class RichEditorHandler
         _projectionSource = VirtualView.InputSnapshot;
         var projected = NativeProjection.ProjectText(_projectionSource.TextBuffer, map, source.TextBuffer, snapshot.TextBuffer);
         _displayState = _displayState with { Source = NativeProjection.Project(_projectionSource, _displayWidth, projected) };
+        if (NativeProjection.SourceProjection?.TabSize > 0)
+        {
+            _projectionSource = null;
+        }
         QueueAdornmentLayout();
     }
 

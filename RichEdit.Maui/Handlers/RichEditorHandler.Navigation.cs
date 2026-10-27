@@ -27,7 +27,7 @@ public partial class RichEditorHandler
             preferred = caret.X + selection.ActiveVirtualSpaces * VirtualSpaceAdvance(selection.Active);
         // A native step can land in a private reservation. Continue through it without
         // exposing that display position as a document caret.
-        for (var attempt = 0; attempt <= NativeProjection.Reservations.Length + 1; attempt++)
+        for (var attempt = 0; attempt <= NativeProjection.Reservations.Length + VirtualView.SourceTabSize + 1; attempt++)
         {
             if (NavigateDisplaySelectionCore(display, direction, extend, preferred, byWord) is not { } result)
                 return null;

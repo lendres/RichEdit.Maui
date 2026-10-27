@@ -103,7 +103,7 @@ public sealed partial class CodeEditorTests
     });
 
     [Fact]
-    public Task TabDisplayWidthUsesNativeSpaceAdvancesWithoutChangingSourceOrIndentation() => WindowsTestHost.RunAsync(async () =>
+    public Task TabDisplayWidthUsesSourceColumnsWithoutChangingSourceOrIndentation() => WindowsTestHost.RunAsync(async () =>
     {
         using var fixture = new CodeEditorFixture("\tX\n    X");
         var editor = fixture.Editor;
@@ -137,7 +137,8 @@ public sealed partial class CodeEditorTests
                 await Task.Delay(150);
                 var interval = (X(7) - X(3)) * 2;
                 var leading = X(0) - X(3);
-                var expected = (Math.Floor((leading + 0.01) / interval) + 1) * interval;
+                // Inline widgets add visual width without changing source columns.
+                var expected = leading + interval;
                 Assert.InRange(Math.Abs((X(1) - X(3)) - expected), 0, 2);
             }
             await Task.Delay(60);

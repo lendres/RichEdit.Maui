@@ -40,11 +40,18 @@ public partial class NativeEditorView
                 Selections.Select(_ => args.Text).ToArray());
     }
 
-    internal sealed record SourceReadback(RichTextDocumentSnapshot Snapshot, TextSelectionState Selection, LfTextProjection Projection);
+    internal sealed record SourceReadback(RichTextDocumentSnapshot Snapshot, TextSelectionState Selection, SourceDisplayProjection Projection);
 
     internal SourceReadback RestoreNativeSource(
-        RichTextDocumentSnapshot native, TextSelectionState selection, TextSpan? knownSourceReplacement = null)
+        RichTextDocumentSnapshot native,
+        TextSelectionState selection,
+        TextSpan? knownSourceReplacement = null,
+        SourceDisplayProjection? displayProjection = null)
     {
+        if (displayProjection is { TabSize: > 0 })
+        {
+            return RestoreExpandedSource(native, selection, displayProjection, knownSourceReplacement);
+        }
         var before = InputSnapshot;
         var projection = ReferenceEquals(before.TextBuffer, Document.SourceLineEndings?.Source)
             ? Document.SourceLineEndings : new LfTextProjection(before.TextBuffer);

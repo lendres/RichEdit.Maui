@@ -189,7 +189,6 @@ public partial class RichEditorHandler
                 }
 
                 _nativeTextSnapshot = null;
-                if (VirtualView.SourceSession is not null) ApplySourceTabInterval();
                 SetSelectionCore(selectionStart, selectionLength);
             }
             finally

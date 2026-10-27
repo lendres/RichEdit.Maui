@@ -65,8 +65,10 @@ public partial class NativeEditorView
             ApplyStructuredNativeInput(rich.Selection, "\u2028")) return true;
         if (modifiers == EditorKeyModifiers.None && key is EditorKey.Enter or EditorKey.Backspace && TryHandleStructuredListKey(key)) return true;
         if (SourceSession is not null && modifiers == EditorKeyModifiers.None && key is EditorKey.Backspace or EditorKey.Delete &&
-            Selections.Any(item => item.AnchorVirtualSpaces != 0 || item.ActiveVirtualSpaces != 0))
+            (UsesExpandedTabs || Selections.Any(item => item.AnchorVirtualSpaces != 0 || item.ActiveVirtualSpaces != 0)))
+        {
             return DeleteSourceVirtualSelections(key == EditorKey.Backspace);
+        }
         if (modifiers == EditorKeyModifiers.None && key is EditorKey.Backspace or EditorKey.Delete && DeleteStructuredSelection()) return true;
         if (modifiers == EditorKeyModifiers.None && key is EditorKey.Left or EditorKey.Right or EditorKey.Up or EditorKey.Down or EditorKey.Home or EditorKey.End &&
             StructuredSession?.Selection is RichEdit.Core.RichCellSelection or RichEdit.Core.RichBlockSelection)
@@ -81,9 +83,11 @@ public partial class NativeEditorView
         }
         if (modifiers == (EditorKeyModifiers.Control | EditorKeyModifiers.Alt) && key is EditorKey.Up or EditorKey.Down)
             return key == EditorKey.Up ? AddCaretAbove() : AddCaretBelow();
-        if (Selections.Count < 2 && !SourceVirtualSpaceEnabled && Selections.Primary.ActiveVirtualSpaces == 0 &&
+        if (!UsesExpandedTabs && Selections.Count < 2 && !SourceVirtualSpaceEnabled && Selections.Primary.ActiveVirtualSpaces == 0 &&
             (StructuredSession is null || _structuredSurfaces.Count == 0))
+        {
             return false;
+        }
         var wordModifier = OperatingSystem.IsIOS() || OperatingSystem.IsMacCatalyst() ? EditorKeyModifiers.Alt : EditorKeyModifiers.Control;
         if ((modifiers & ~EditorKeyModifiers.Shift) == wordModifier && key is EditorKey.Left or EditorKey.Right)
             return MoveSelections(key, (modifiers & EditorKeyModifiers.Shift) != 0, byWord: true);
